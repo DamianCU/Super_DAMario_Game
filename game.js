@@ -1,7 +1,9 @@
 import {createAnimations} from './animations.js';
+import { checkControls } from './controls.js';
 
 /* Global Phaser */
 const config= {
+    autoFocus: false,
     type: Phaser.AUTO, // webgl, canvas
     width: 256,
     height: 244,
@@ -25,9 +27,9 @@ new Phaser.Game(config)
 // this -> game -> el juego que estamos construyendo
 function preload() {
     this.load.image(
-        'cloud1', 'assets/scenery/overworld/cloud1.png'    
-
+        'cloud1', 'assets/scenery/overworld/cloud1.png'
     )
+    
     this.load.image(
         'floorbricks',
         'assets/scenery/overworld/floorbricks.png'
@@ -44,7 +46,7 @@ function preload() {
 function create() {
     // image(x, y, id-del-aset)
     this.add.image(100,50,'cloud1')
-        .setOrigin(0.5,0.5)
+        .setOrigin(0.5, 0.5)
         .setScale(0.2);
     
     //Esto es para que los suelos sean firmes
@@ -82,39 +84,26 @@ function create() {
 
 
 function update() {
-    if(this.mario.isDead) return;
+    checkControls(this)
 
-    if (this.keys.left.isDown){
-        this.mario.anims.play('mario-walk', true)
-        this.mario.x -= 7
-        this.mario.flipX = true;        
+    const {mario, sound, scene} = this
 
-    } else if (this.keys.right.isDown){
-        this.mario.anims.play('mario-walk', true);
-        this.mario.x += 7;
-        this.mario.flipX = false
+    if(mario.y >= config.height){
+        mario.isDead = true
+        mario.anims.play('mario-dead')
+        mario.setCollideWorldBounds(false)
+        try {
+          sound.add('gameover', {volume: 0.2}).play()
+        }catch(e){
 
-    } else {
-        this.mario.anims.play('mario-idle', true);
-    }
-
-    if ((this.keys.up.isDown || this.keys.space.isDown) && this.mario.body.touching.down) {
-        this.mario.setVelocityY(-300)
-        this.mario.anims.play('mario-jump', true)
-    }
-
-    if(this.mario.y >= config.height){
-        this.mario.isDead = true
-        this.mario.anims.play('mario-dead')
-        this.mario.setCollideWorldBounds(false)
-        this.sound.add('gameover', {volume: 0.2}).play()
+        }
 
         setTimeout(() => {
-            this.mario.setVelocityY(-300)
+          mario.setVelocityY(-300)
         },2000)
 
         setTimeout(() => {
-            this.scene.restart()
+          scene.restart()
         },2000)
     }
 }

@@ -1,7 +1,7 @@
 export const createAnimations = (game) => {
     game.anims.create({
         key: 'mario-walk',
-        frames: this.anims.generateFrameNumbers(
+        frames: game.anims.generateFrameNumbers(
             'mario',
             {start: 1, end: 3}
         ),
