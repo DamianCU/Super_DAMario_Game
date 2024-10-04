@@ -1,7 +1,6 @@
 export function checkControls ({ mario, keys}) {
 
     const isMarioTouchingFloor = mario.body.touching.down
-
     const isLeftKeyDown = keys.left.isDown
     const isRightKeyDown = keys.right.isDown
     const isUpKeyDown = keys.up.isDown
@@ -23,7 +22,7 @@ export function checkControls ({ mario, keys}) {
     }
 
     if ((isUpKeyDown || keys.space.isDown) && isMarioTouchingFloor) {
-        mario.setVelocityY(-300)
+        mario.setVelocityY(-350)
         mario.anims.play('mario-jump', true)
     }
 }
