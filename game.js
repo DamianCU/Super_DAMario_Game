@@ -44,16 +44,31 @@ function create() {
         .setOrigin(0.5,0.5)
         .setScale(0.2);
     
-    this.floor = 
-    this.add.tileSprite(0, config.height - 16,config.width, 32, 'floorbricks')
-        .setOrigin(0, 0.5)        
+    //Esto es para que los suelos sean firmes
+    this.floor = this.physics.add.staticGroup()
 
-    //this.mario = this.add.sprite(50, 210, 'mario')
-    //    .setOrigin(0, 1)
+    this.floor 
+        .create(0, config.height - 16, 'floorbricks')
+        .setOrigin(0, 0.5)
+        .refreshBody()
 
-    this.mario = this.physics.add.sprite(50, 210, 'mario')
+    this.floor 
+        .create(150, config.height - 16, 'floorbricks')
+        .setOrigin(0, 0.5)
+        .refreshBody()
+
+
+    this.mario = this.physics.add.sprite(50, 100, 'mario')
         .setOrigin(0, 1)
-        .setGravityY(1)
+        .setCollideWorldBounds(true)
+        .setGravityY(800)
+
+    
+    this.physics.world.setBounds(0, 0, 2000, config.height)
+    this.physics.add.collider(this.mario, this.floor)
+
+    this.cameras.main.setBounds(0, 0, 2000, config.height)
+    this.cameras.main.startFollow(this.mario)
 
     this.anims.create({
         key: 'mario-walk',
@@ -61,7 +76,7 @@ function create() {
             'mario',
             {start: 1, end: 3}
         ),
-        frameRate: 20,
+        frameRate: 12,
         repeat: -1
     })
 
@@ -96,8 +111,8 @@ function update() {
         this.mario.anims.play('mario-idle', true);
     }
 
-    if (this.keys.up.isDown) {
-        this.mario.y -= 5
+    if (this.keys.up.isDown && this.mario.body.touching.down) {
+        this.mario.setVelocityY(-300)
         this.mario.anims.play('mario-jump', true)
     }
 }
