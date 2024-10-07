@@ -1,125 +1,141 @@
-import { createAnimations } from './animations.js';
+import {createAnimations} from './animations.js';
 import { checkControls } from './controls.js';
 import { initAudio, playAudio } from './audio.js';
 import { initSpriteSheet } from './sprites.js';
 
-const config = {
-  autoFocus: false,
-  type: Phaser.AUTO,
-  width: 256,
-  height: 244,
-  backgroundColor: '#049cd8',
-  parent: 'game',
-  physics: {
-    default: 'arcade',
-    arcade: {
-      gravity: { y: 300 },
-      debug: false,
+
+/* Global Phaser */
+const config= {
+    autoFocus: false,
+    type: Phaser.AUTO, // webgl, canvas
+    width: 256,
+    height: 244,
+    backgroundColor: "#049cd8",
+    parent: 'game',
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 300},
+            debug: false
+        }
     },
-  },
-  scene: {
-    preload,
-    create,
-    update,
-  },
-};
+    scene: {
+        preload, // se ejecutará para precargar recursos
+        create, // se ejecuta cuando el juego comienza
+        update  // se ejecuta en cada frame
+    }
+}
 
-new Phaser.Game(config);
-
+new Phaser.Game(config)
+// this -> game -> el juego que estamos construyendo
 function preload() {
-  this.load.image('cloud1', 'assets/scenery/overworld/cloud1.png');
-  this.load.image('floorbricks', 'assets/scenery/overworld/floorbricks.png');
+    this.load.image(
+        'cloud1', 'assets/scenery/overworld/cloud1.png'
+    )
+    
+    this.load.image(
+        'floorbricks',
+        'assets/scenery/overworld/floorbricks.png'
+    )
 
-  initSpriteSheet(this);
-  initAudio(this);
+    initSpriteSheet(this)
+    initAudio(this)
 }
 
 function create() {
-  createAnimations(this);
+    createAnimations(this)
+    
+    // image(x, y, id-del-aset)
+    this.add.image(100,50,'cloud1')
+        .setOrigin(0.5, 0.5)
+        .setScale(0.2);
+    
+    //Esto es para que los suelos sean firmes
+    this.floor = this.physics.add.staticGroup()
 
-  this.add.image(100, 50, 'cloud1')
-    .setOrigin(0.5, 0.5)
-    .setScale(0.2);
+    this.floor 
+        .create(0, config.height - 16, 'floorbricks')
+        .setOrigin(0, 0.5)
+        .refreshBody()
 
-  this.floor = this.physics.add.staticGroup();
+    this.floor 
+        .create(150, config.height - 16, 'floorbricks')
+        .setOrigin(0, 0.5)
+        .refreshBody()
 
-  this.floor
-    .create(0, config.height - 16, 'floorbricks')
-    .setOrigin(0, 0.5)
-    .refreshBody();
 
-  this.floor
-    .create(150, config.height - 16, 'floorbricks')
-    .setOrigin(0, 0.5)
-    .refreshBody();
+    this.mario = this.physics.add.sprite(50, 100, 'mario')
+        .setOrigin(0, 1)
+        .setCollideWorldBounds(true)
+        .setGravityY(800)
+    
+    this.enemy = this.physics.add.sprite(120, config.height - 32, 'goomba')
+        .setOrigin(0, 1)
+        .setGravityY(300)
+        .setVelocityX(-50)
+        
+    this.coins = this.physics.add.staticGroup()
+    this.coins.create(150, 150, 'coin').anims.play('coin-idle', true)
+    
+    this.physics.world.setBounds(0, 0, 2000, config.height)
+    this.physics.add.collider(this.mario, this.floor)
+    this.physics.add.collider(this.enemy, this.floor)
+    this.physics.add.collider(this.mario, this.enemy, onHitEnemy, null, this)
 
-  this.mario = this.physics.add.sprite(50, 100, 'mario')
-    .setOrigin(0, 1)
-    .setCollideWorldBounds(true)
-    .setGravityY(800);
+    this.cameras.main.setBounds(0, 0, 2000, config.height)
+    this.cameras.main.startFollow(this.mario)
 
-  this.enemy = this.physics.add.sprite(120, config.height - 32, 'goomba')
-    .setOrigin(0, 1)
-    .setGravityY(300)
-    .setVelocityX(-50);
 
-  this.coins = this.physics.add.staticGroup();
-  this.coins.create(150, 150, 'coin').anims.play('coin-idle', true);
-
-  this.physics.world.setBounds(0, 0, 2000, config.height);
-  this.physics.add.collider(this.mario, this.floor);
-  this.physics.add.collider(this.enemy, this.floor);
-  this.physics.add.collider(this.mario, this.enemy, onHitEnemy, null, this);
-
-  this.cameras.main.setBounds(0, 0, 2000, config.height);
-  this.cameras.main.startFollow(this.mario);
-
-  this.enemy.anims.play('goomba-walk', true);
-  this.keys = this.input.keyboard.createCursorKeys();
+    this.enemy.anims.play('goomba-walk', true)
+    this.keys = this.input.keyboard.createCursorKeys()
 }
 
 function onHitEnemy(mario, enemy) {
-  if (mario.body.touching.down && enemy.body.touching.up) {
-    enemy.anims.play('goomba-hurt', true);
-    mario.setVelocityY(-200);
+    if (mario.body.touching.down && enemy.body.touching.up){
+        enemy.anims.play('goomba-hurt', true)
+        mario.setVelocityY(-200)
 
-    playAudio('goomba-stomp', this);
+        playAudio('goomba-stomp', this)
 
-    setTimeout(() => {
-      enemy.destroy();
-    }, 500);
-  } else {
-    killMario(this);
-  }
+        setTimeout(() => {
+            enemy.destroy()
+        }, 500)
+    } else {
+        killMario(this)
+    }
+    
 }
 
 function update() {
-  checkControls(this);
+    const {mario} = this
 
-  if (this.mario.y >= config.height) {
-    killMario(this);
-  }
+    checkControls(this)
+
+    //Version MIDU; if(mario.y >= config.height){
+    if(mario.y >= config.height){
+        killMario(this)
+    }
 }
 
-function killMario({ game }) {
-  const { mario, scene } = game;
+function killMario({game}) {
+    const {mario, scene} = game
 
-  if (mario.isDead) return;
-  mario.isDead = true;
+    if(mario.isDead) return
+    mario.isDead = true
 
-  mario.anims.play('mario-dead');
-  mario.setCollideWorldBounds(false);
+    mario.anims.play('mario-dead')
+    mario.setCollideWorldBounds(false)
 
-  playAudio('gameover', game, { volume: 0.2 });
+    playAudio('gameover', game, {volume: 0.2})
+    
+    mario.body.checkCollision.none = true
+    mario.setVelocityX(0)
 
-  mario.body.checkCollision.none = true;
-  mario.setVelocityX(0);
+    setTimeout(() => {
+      mario.setVelocityY(-250)
+    },100)         
 
-  setTimeout(() => {
-    mario.setVelocityY(-250);
-  }, 100);
-
-  setTimeout(() => {
-    scene.restart();
-  }, 2000);
+    setTimeout(() => {
+      scene.restart()
+    },2000)
 }
